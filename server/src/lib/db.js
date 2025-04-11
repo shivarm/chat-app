@@ -7,6 +7,7 @@ export const connectDb = async () => {
     logger.start("Connecting to MongoDB..");
     await mongoose.connect(config.DB_URI, {
       ssl: true,
+      connectTimeoutMS: 30000, // avoid infinite waiting
     });
 
     logger.success("MongoDB connected");
