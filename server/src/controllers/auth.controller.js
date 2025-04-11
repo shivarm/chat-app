@@ -5,48 +5,40 @@ import { logger } from "../utils/logger.js";
 
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
+
   try {
     if (!fullName || !email || !password) {
-      res.status(400).json({ message: "All fields are require!" });
+      return res.status(400).json({ message: "All fields are required!" });
     }
 
     if (password.length < 6) {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
-    const user = await User.findOne({ email });
-
-    if (user) {
-      return res.status(400).json({ message: "Email already exist" });
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already exists." });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashPassword = await bcrypt.hash(password, salt);
+    // Hash password and create user
+    const hashPassword = await bcrypt.hash(password, 10);
+    const newUser = await User.create({ fullName, email, password: hashPassword });
 
-    const newUser = new User({
-      fullName,
-      email,
-      password: hashPassword,
+    // Generate JWT token and respond
+    generateToken(newUser._id, res);
+    res.status(201).json({
+      _id: newUser._id,
+      fullName: newUser.fullName,
+      email: newUser.email,
+      profilePic: newUser.profilePic,
     });
-
-    // generate jwt token
-    if (newUser) {
-      generateToken(newUser._id, res);
-      await newUser.save();
-      res.status(201).json({
-        _id: newUser._id,
-        fullName: newUser.fullName,
-        email: newUser.email,
-        profilePic: newUser.profilePic,
-      });
-    } else {
-      res.status(400).json({ message: "Invalid user data" });
-    }
   } catch (error) {
     logger.error("Error in signup", error);
-    throw error;
+    res.status(500).json({ message: "Internal server error." });
   }
 };
+
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -75,9 +67,10 @@ export const login = async (req, res) => {
     throw error;
   }
 };
+
 export const logout = async (req, res) => {
   try {
-    res.cookie("jwt", "", { maxAge: 0 });
+    res.clearCookie("jwt");
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     logger.error("Error in logout", error);
