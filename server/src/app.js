@@ -8,6 +8,7 @@ import { connectDb } from "./lib/db.js";
 import { logger } from "./utils/logger.js";
 
 import authRoutes from "./routes/auth.route.js";
+import messageRoutes from "./routes/message.route.js";
 
  
 const PORT = config.PORT;
@@ -19,6 +20,7 @@ app.use(helmet());
 app.use(morgan("dev"));
 
 app.use("/api/auth", authRoutes);
+app.use("/api/message", messageRoutes);
 
 app.use((error, req, res, next) => {
   res.status(error.status || 500);
