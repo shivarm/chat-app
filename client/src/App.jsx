@@ -29,7 +29,7 @@ const App = () => {
 
   return (
     <div>
-      {/* <Navbar /> */}
+      <Navbar />
 
       <Routes>
         <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
